@@ -44,12 +44,35 @@
                (_fun _pointer _path -> _int)))
 
 
-;; Let's try using this.
-;;
-;; We basically want to create storage for a single pointer.  A way to do this is with malloc.
-(define a-pointer-block (malloc _pointer 1))
-(ptr-ref a-pointer-block _uint 0)
-(void (git_repository_open a-pointer-block ".git"))
-(ptr-ref a-pointer-block _uint 0)
+;; We want to create storage for a single pointer.  A way to do this is with malloc.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (make-git-repo-box)
+  (malloc _pointer 1))
+
+(define (git-repo-box-ref a-box)
+  (ptr-ref a-box _pointer 0))
+
+(define (git-repo-box-free a-box)
+  (free a-box))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+;; Ok, so we can create this box holding a single pointer.  Let's pass it over to
+;; libgit.
+(define a-repo-box (make-git-repo-box))
+(void (git_repository_open a-repo-box ".git"))
+
+
+;; Now, let's map git_repository_free.
+(define git_repository_free
+  (get-ffi-obj "git_repository_free"
+               libgit2.so
+               (_fun _pointer -> _void)))
+
+
+;; Can we call it on our repository?
+(git_repository_free (git-repo-box-ref a-repo-box))
+
+
+;; Ok, good.  We should also deallocate the repo-box.
+(git-repo-box-free a-repo-box)
