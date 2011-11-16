@@ -37,3 +37,15 @@
 ;;
 ;; git_repository_open uses an output parameter for which it writes a
 ;; pointer.  How do we use the ffi with output parameters?
+;;
+(define git_repository_open
+  (get-ffi-obj "git_repository_open"
+               libgit2.so
+               (_fun _pointer _path -> _int)))
+
+;; Let's try using this.
+;;
+;; We basically want to create storage for a single pointer.  A way to do this is with malloc.
+(define a-pointer-block (malloc _pointer 1))
+
+(git_repository_open a-pointer-block
