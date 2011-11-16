@@ -78,5 +78,31 @@
 (git_repository_free (git-repo-box-ref a-repo-box))
 
 
-;; Ok, good.  We should also deallocate the repo-box.
-(git-repo-box-free a-repo-box)
+
+;; Ok, we can open and close repositories.  We should try to do more.
+;;
+;; For example, let's try mapping git_repository_path.
+;;
+;; http://libgit2.github.com/libgit2/#HEAD/group/repository/git_repository_path
+;;
+;; It takes two arguments, a repository, and a git_repository_pathid.
+(define git_repository_pathid (_enum '(GIT_REPO_PATH
+                                       GIT_REPO_PATH_INDEX
+                                       GIT_REPO_PATH_ODB
+                                       GIT_REPO_PATH_WORKDIR)))
+
+(define git_repository_path
+  (get-ffi-obj "git_repository_path"
+               libgit2.so
+               (_fun _pointer git_repository_pathid -> _path)))
+
+
+
+;; Let's try using it.
+(void (git_repository_open a-repo-box ".git"))
+(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH)
+(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH_INDEX)
+(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH_ODB)
+(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH_WORKDIR)
+
+(git_repository_free (git-repo-box-ref a-repo-box))
