@@ -106,3 +106,27 @@
 (git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH_WORKDIR)
 
 (git_repository_free (git-repo-box-ref a-repo-box))
+
+
+
+;; By the way, let's get the version of libgit.
+;; It uses three output parameters to integers.
+(define git_libgit2_version
+  (get-ffi-obj "git_libgit2_version"
+               libgit2.so
+               (_fun _pointer _pointer _pointer -> _void)))
+;; So in order to use it, we need to malloc three blocks and pass them
+;; to the function.
+(define-values (major minor rev) (values (malloc _int 1)
+                                         (malloc _int 1)
+                                         (malloc _int 1)))
+(git_libgit2_version major minor rev)
+(printf "major: ~s\n" (ptr-ref major _int 0))
+(printf "minor: ~s\n" (ptr-ref minor _int 0))
+(printf "rev: ~s\n" (ptr-ref rev _int 0))
+
+;; It actually makes more sense to do this one first in the tutorial.
+;; It presents the need for output parameters, and it's easy to
+;; exercise.
+
+;; The higher-level API will help make this less silly to work with.
