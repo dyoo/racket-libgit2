@@ -1,0 +1,10 @@
+WARNING WARNING WARNING
+
+Do not use this package yet.  I'm really using this to train myself on
+the Racket FFI.  As such, I'll be doing some silly stuff here.  I'm
+hoping that I can learn enough to turn this into a full-on tutorial on
+the Racket FFI (and get a useful package in the process).  But for the
+moment, everything here is not going to work well.
+
+Especially copying the libgit2.so.0.  That's just wrong, but it makes
+my exercising of the package a lot easier.
