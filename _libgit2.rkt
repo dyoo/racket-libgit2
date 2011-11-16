@@ -43,9 +43,13 @@
                libgit2.so
                (_fun _pointer _path -> _int)))
 
+
 ;; Let's try using this.
 ;;
 ;; We basically want to create storage for a single pointer.  A way to do this is with malloc.
 (define a-pointer-block (malloc _pointer 1))
+(ptr-ref a-pointer-block _uint 0)
+(void (git_repository_open a-pointer-block ".git"))
+(ptr-ref a-pointer-block _uint 0)
 
-(git_repository_open a-pointer-block
+
