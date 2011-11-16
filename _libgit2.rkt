@@ -47,15 +47,19 @@
 ;; We want to create storage for a single pointer.  A way to do this is with malloc.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define (make-git-repo-box)
+  ;; Note: the box itself is garbage collected since we haven't given
+  ;; the 'raw option to malloc.  So we don't have to free it explicitly.
   (malloc _pointer 1))
+
 
 (define (git-repo-box-ref a-box)
   (ptr-ref a-box _pointer 0))
-
-(define (git-repo-box-free a-box)
-  (free a-box))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+
+
+;; Testing:
 
 ;; Ok, so we can create this box holding a single pointer.  Let's pass it over to
 ;; libgit.
