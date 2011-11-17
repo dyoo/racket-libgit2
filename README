@@ -8,3 +8,9 @@ moment, everything here is not going to work well.
 
 Especially copying the libgit2.so.0.  That's just wrong, but it makes
 my exercising of the package a lot easier.
+
+----------------------------------------------------------------------
+
+Note: it looks like Joan Arnaldich is also working on a similar
+libgit2 binding, as mentioned in:
+http://lists.racket-lang.org/users/archive/2011-September/047756.html

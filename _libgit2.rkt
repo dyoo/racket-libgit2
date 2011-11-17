@@ -6,6 +6,10 @@
 
 
 
+
+
+
+
 ;; Following the guide from: http://libgit2.github.com/api.html...
 
 
@@ -34,6 +38,15 @@
 ;;                 (_fun ... _path -> _int)))
 ;;
 ;; Ok, let's come back to the question: what do we put in the first part?
+
+
+
+;; It's a little uncomfortable for me to treat pointers all the same.
+;; They really should be typed.  Let me first create a specific pointer type
+;; for git repositories.
+(define-cpointer-type _git_repository)
+
+
 ;;
 ;; git_repository_open uses an output parameter for which it writes a
 ;; pointer.  How do we use the ffi with output parameters?
@@ -49,13 +62,12 @@
 (define (make-git-repo-box)
   ;; Note: the box itself is garbage collected since we haven't given
   ;; the 'raw option to malloc.  So we don't have to free it explicitly.
-  (malloc _pointer 1))
+  (malloc _git_repository 1))
 
 
 (define (git-repo-box-ref a-box)
-  (ptr-ref a-box _pointer 0))
+  (ptr-ref a-box _git_repository 0))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 
 
@@ -64,6 +76,7 @@
 ;; Ok, so we can create this box holding a single pointer.  Let's pass it over to
 ;; libgit.
 (define a-repo-box (make-git-repo-box))
+(printf "opening the repository\n")
 (void (git_repository_open a-repo-box ".git"))
 
 
@@ -71,7 +84,7 @@
 (define git_repository_free
   (get-ffi-obj "git_repository_free"
                libgit2.so
-               (_fun _pointer -> _void)))
+               (_fun _git_repository -> _void)))
 
 
 ;; Can we call it on our repository?
@@ -94,7 +107,7 @@
 (define git_repository_path
   (get-ffi-obj "git_repository_path"
                libgit2.so
-               (_fun _pointer git_repository_pathid -> _path)))
+               (_fun _git_repository git_repository_pathid -> _path)))
 
 
 
@@ -109,8 +122,10 @@
 
 
 
-;; By the way, let's get the version of libgit.
-;; It uses three output parameters to integers.
+;; By the way, let's get the version of libgit.  Although this is
+;; undocumented in the public API documentation, it's something we can
+;; easily bind to.  It uses three output parameters to integers to
+;; represent grabbing the major, minor, and revision numbers.
 (define git_libgit2_version
   (get-ffi-obj "git_libgit2_version"
                libgit2.so
@@ -130,3 +145,30 @@
 ;; exercise.
 
 ;; The higher-level API will help make this less silly to work with.
+
+
+
+;; Let's try mapping oids.  The structure definition of an OID is:
+;
+;#define GIT_OID_RAWSZ 20
+;struct _git_oid {
+;	/** raw binary formatted id */
+;	unsigned char id[GIT_OID_RAWSZ];
+;};
+;;
+
+(define GIT_OID_RAWSZ 20)
+
+;; Let's try producing _git_oid's from strings.
+;; http://libgit2.github.com/libgit2/ex/HEAD/general.html#git_oid_fromstr-69
+(define git_oid_fromstr
+  (get-ffi-obj "git_oid_fromstr"
+               libgit2.so
+               (_fun (oid : (_bytes o GIT_OID_RAWSZ))
+                     _string
+                     -> (status : _int)
+                     -> (values oid status))))
+;; Here, we're defining git_oid_fromstr to return multiple values.  The _ptr allows
+;; us to get output values back.  We should go back to the previous functions above
+;; and use this.
+(git_oid_fromstr "ce08fe4884650f067bd5703b6a59a8b3b3c99a09")
