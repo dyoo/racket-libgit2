@@ -155,7 +155,7 @@
 ;	/** raw binary formatted id */
 ;	unsigned char id[GIT_OID_RAWSZ];
 ;};
-;;
+
 
 (define GIT_OID_RAWSZ 20)
 
@@ -171,4 +171,18 @@
 ;; Here, we're defining git_oid_fromstr to return multiple values.  The _ptr allows
 ;; us to get output values back.  We should go back to the previous functions above
 ;; and use this.
-(git_oid_fromstr "ce08fe4884650f067bd5703b6a59a8b3b3c99a09")
+(define-values (raw-oid status)
+  (git_oid_fromstr "ce08fe4884650f067bd5703b6a59a8b3b3c99a09"))
+raw-oid
+
+
+(define git_oid_fmt
+  (get-ffi-obj "git_oid_fmt"
+               libgit2.so
+               (_fun (str : (_bytes o 40))
+                     (oid : _bytes)
+                     -> _void
+                     -> str)))
+
+;; We should get back the original oid here.
+(git_oid_fmt raw-oid)
