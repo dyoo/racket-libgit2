@@ -49,35 +49,25 @@
 
 ;;
 ;; git_repository_open uses an output parameter for which it writes a
-;; pointer.  How do we use the ffi with output parameters?
+;; pointer.  How do we use the ffi with output parameters?  We use
+;; _ptr with the 'o' mode.
 ;;
 (define git_repository_open
   (get-ffi-obj "git_repository_open"
                libgit2.so
-               (_fun _pointer _path -> _int)))
-
-
-;; We want to create storage for a single pointer.  A way to do this is with malloc.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define (make-git-repo-box)
-  ;; Note: the box itself is garbage collected since we haven't given
-  ;; the 'raw option to malloc.  So we don't have to free it explicitly.
-  (malloc _git_repository 1))
-
-
-(define (git-repo-box-ref a-box)
-  (ptr-ref a-box _git_repository 0))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+               (_fun (repo : (_ptr o _git_repository))
+                     _path
+                     -> (status : _int)
+                     -> (values repo status))))
 
 
 ;; Testing:
 
 ;; Ok, so we can create this box holding a single pointer.  Let's pass it over to
 ;; libgit.
-(define a-repo-box (make-git-repo-box))
 (printf "opening the repository\n")
-(void (git_repository_open a-repo-box ".git"))
+(define-values (a-repo a-status)
+  (git_repository_open ".git"))
 
 
 ;; Now, let's map git_repository_free.
@@ -88,7 +78,7 @@
 
 
 ;; Can we call it on our repository?
-(git_repository_free (git-repo-box-ref a-repo-box))
+(git_repository_free a-repo)
 
 
 
@@ -112,13 +102,15 @@
 
 
 ;; Let's try using it.
-(void (git_repository_open a-repo-box ".git"))
-(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH)
-(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH_INDEX)
-(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH_ODB)
-(git_repository_path (git-repo-box-ref a-repo-box) 'GIT_REPO_PATH_WORKDIR)
+(set! a-repo (let-values ([(a-repo status)
+                           (git_repository_open ".git")])
+               a-repo))
+(git_repository_path a-repo 'GIT_REPO_PATH)
+(git_repository_path a-repo 'GIT_REPO_PATH_INDEX)
+(git_repository_path a-repo 'GIT_REPO_PATH_ODB)
+(git_repository_path a-repo 'GIT_REPO_PATH_WORKDIR)
 
-(git_repository_free (git-repo-box-ref a-repo-box))
+(git_repository_free a-repo)
 
 
 
@@ -129,16 +121,17 @@
 (define git_libgit2_version
   (get-ffi-obj "git_libgit2_version"
                libgit2.so
-               (_fun _pointer _pointer _pointer -> _void)))
+               (_fun (major : (_ptr o _int))
+                     (minor : (_ptr o _int))
+                     (rev : (_ptr o _int))
+                     -> _void
+                     -> (values major minor rev))))
 ;; So in order to use it, we need to malloc three blocks and pass them
 ;; to the function.
-(define-values (major minor rev) (values (malloc _int 1)
-                                         (malloc _int 1)
-                                         (malloc _int 1)))
-(git_libgit2_version major minor rev)
-(printf "major: ~s\n" (ptr-ref major _int 0))
-(printf "minor: ~s\n" (ptr-ref minor _int 0))
-(printf "rev: ~s\n" (ptr-ref rev _int 0))
+(define-values (major minor rev) (git_libgit2_version))
+(printf "major: ~s\n" major)
+(printf "minor: ~s\n" minor)
+(printf "rev: ~s\n" rev)
 
 ;; It actually makes more sense to do this one first in the tutorial.
 ;; It presents the need for output parameters, and it's easy to
