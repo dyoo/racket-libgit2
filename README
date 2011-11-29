@@ -14,3 +14,4 @@ my exercising of the package a lot easier.
 Note: it looks like Joan Arnaldich is also working on a similar
 libgit2 binding, as mentioned in:
 http://lists.racket-lang.org/users/archive/2011-September/047756.html
+and https://github.com/jarnaldich/racket-git
